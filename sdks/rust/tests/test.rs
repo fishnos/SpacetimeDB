@@ -62,7 +62,8 @@ fn platform_test_builder(client_project: &str, run_selector: Option<&str>) -> Te
               if (!run) throw new Error(\"No exported run/main/start function from wasm module\"); \
               const dbName = process.env.SPACETIME_SDK_TEST_DB_NAME; \
               if (!dbName) throw new Error(\"Missing SPACETIME_SDK_TEST_DB_NAME\"); \
-              await run({run_selector:?}, dbName); \
+              const serverUrl = process.env.SPACETIME_SDK_TEST_SERVER_URL || \"http://localhost:3000\"; \
+              await run({run_selector:?}, dbName, serverUrl); \
               // These wasm clients run under Node rather than a browser. Some tests intentionally leave
               // websocket/event-loop work alive once their assertions are complete, so exit here to keep
               // non-lifecycle tests from hanging on leftover handles after `run()` has finished.

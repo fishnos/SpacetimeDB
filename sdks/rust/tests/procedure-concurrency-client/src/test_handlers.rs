@@ -4,7 +4,16 @@ use spacetimedb_sdk::{DbConnectionBuilder, DbContext, Table};
 use std::sync::{Arc, Mutex};
 use test_counter::TestCounter;
 
-const LOCALHOST: &str = "http://localhost:3000";
+const DEFAULT_SERVER_URL: &str = "http://localhost:3000";
+static SERVER_URL: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+
+pub fn set_server_url(url: String) {
+    let _ = SERVER_URL.set(url);
+}
+
+fn server_url() -> &'static str {
+    SERVER_URL.get().map(String::as_str).unwrap_or(DEFAULT_SERVER_URL)
+}
 
 pub async fn dispatch(test: &str, db_name: &str) {
     match test {
@@ -62,7 +71,7 @@ async fn connect_with_then(
     let name = db_name.to_owned();
     let builder = DbConnection::builder()
         .with_database_name(name)
-        .with_uri(LOCALHOST)
+        .with_uri(server_url())
         .on_connect(|ctx, _, _| {
             callback(ctx);
             connected_result(Ok(()));

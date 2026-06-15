@@ -21,7 +21,16 @@ use crate::pk_test_table::{insert_update_delete_one, PkTestTable};
 
 use crate::unique_test_table::{insert_then_delete_one, UniqueTestTable};
 
-const LOCALHOST: &str = "http://localhost:3000";
+const DEFAULT_SERVER_URL: &str = "http://localhost:3000";
+static SERVER_URL: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+
+pub fn set_server_url(url: String) {
+    let _ = SERVER_URL.set(url);
+}
+
+fn server_url() -> &'static str {
+    SERVER_URL.get().map(String::as_str).unwrap_or(DEFAULT_SERVER_URL)
+}
 
 /// `Timestamp::now()` is stubbed on `wasm32-unknown-unknown`, so client-side tests
 /// that need a timestamp value must use a deterministic literal instead of wall-clock time.
@@ -372,7 +381,7 @@ async fn connect_with_then(
     let name = db_name.to_owned();
     let builder = DbConnection::builder()
         .with_database_name(name)
-        .with_uri(LOCALHOST)
+        .with_uri(server_url())
         .on_connect(|ctx, _, _| {
             callback(ctx);
             connected_result(Ok(()));
@@ -1744,7 +1753,7 @@ async fn exec_reauth_part_1(db_name: &str) {
         })
         .on_connect_error(|_ctx, error| panic!("Connect failed: {error:?}"))
         .with_database_name(name)
-        .with_uri(LOCALHOST)
+        .with_uri(server_url())
         .build()
         .unwrap()
         .run_threaded();
@@ -1780,7 +1789,7 @@ async fn exec_reauth_part_2(db_name: &str) {
         .on_connect_error(|_ctx, error| panic!("Connect failed: {error:?}"))
         .with_database_name(name)
         .with_token(Some(token))
-        .with_uri(LOCALHOST)
+        .with_uri(server_url())
         .build()
         .unwrap()
         .run_threaded();
@@ -1811,7 +1820,7 @@ async fn exec_reconnect_different_connection_id(db_name: &str) {
     let initial_connection = build_and_run(
         DbConnection::builder()
             .with_database_name(db_name)
-            .with_uri(LOCALHOST)
+            .with_uri(server_url())
             .on_connect_error(|_ctx, error| panic!("on_connect_error: {error:?}"))
             .on_connect(move |_, _, _| {
                 initial_connect_result(Ok(()));
@@ -1838,7 +1847,7 @@ async fn exec_reconnect_different_connection_id(db_name: &str) {
     let _re_connection = build_and_run(
         DbConnection::builder()
             .with_database_name(db_name)
-            .with_uri(LOCALHOST)
+            .with_uri(server_url())
             .on_connect_error(|_ctx, error| panic!("on_connect_error: {error:?}"))
             .on_connect(move |ctx, _, _| {
                 reconnect_result(Ok(()));

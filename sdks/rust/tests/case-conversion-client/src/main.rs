@@ -10,10 +10,14 @@ use spacetimedb_sdk::{DbContext, Table, TableWithPrimaryKey};
 use std::sync::Arc;
 use test_counter::TestCounter;
 
-const LOCALHOST: &str = "http://localhost:3000";
+const DEFAULT_SERVER_URL: &str = "http://localhost:3000";
 
 fn db_name_or_panic() -> String {
     std::env::var("SPACETIME_SDK_TEST_DB_NAME").expect("Failed to read db name from env")
+}
+
+fn server_url() -> String {
+    std::env::var("SPACETIME_SDK_TEST_SERVER_URL").unwrap_or_else(|_| DEFAULT_SERVER_URL.to_owned())
 }
 
 fn exit_on_panic() {
@@ -83,7 +87,7 @@ fn connect_then(
     let name = db_name_or_panic();
     let conn = DbConnection::builder()
         .with_database_name(name)
-        .with_uri(LOCALHOST)
+        .with_uri(server_url())
         .on_connect(move |ctx, _, _| {
             callback(ctx);
             connected_result(Ok(()));
