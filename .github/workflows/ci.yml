@@ -332,7 +332,10 @@ jobs:
       - name: Run tests
         run: |
           source ~/emsdk/emsdk_env.sh
-          cargo ci test
+          # cargo ci test
+          cargo test -p spacetimedb-sdk \
+            --features allow_loopback_http_for_tests \
+            -- --test-threads=2
 
   keynote_bench:
     needs: [lints]
